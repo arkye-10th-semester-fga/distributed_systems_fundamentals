@@ -1,3 +1,5 @@
+07/03/2017 - Tuesday
+
 # Syllabus
 
 * **Moodle**: FSD `fsd.2017.1`
