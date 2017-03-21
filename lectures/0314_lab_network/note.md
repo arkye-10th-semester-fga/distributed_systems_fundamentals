@@ -2,4 +2,4 @@
 
 # Lab - Network
 
-* LDS Wi-Fi Password: `LdsP00t`
+* LDS Wi-Fi Password: `!20LDS15*`
