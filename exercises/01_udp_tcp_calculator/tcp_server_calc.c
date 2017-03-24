@@ -107,8 +107,8 @@ void serve_client(int descriptor, struct sockaddr_in client_address)
 
 		// Parse the Message
 		int i;
-		long long first_number = 0;
-		long long second_number = 0;
+		double first_number = 0;
+		double second_number = 0;
 		char operand = '+';
 		char operands[] = "+-*/^";
 		for(i = 0; i < 5; i++)
@@ -116,9 +116,10 @@ void serve_client(int descriptor, struct sockaddr_in client_address)
 			if(strchr(message, operands[i]) != NULL)
 			{
 				char* token = strtok(message, operands);
-				first_number = atoll(token);
+				char* endPointer;
+				first_number = strtod(token, &endPointer);
 				token = strtok(NULL, operands);
-				second_number = atoll(token);
+				second_number = strtod(token, &endPointer);
 				operand = operands[i];
 			}
 		}
