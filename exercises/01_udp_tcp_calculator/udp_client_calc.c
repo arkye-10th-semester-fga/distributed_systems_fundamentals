@@ -12,13 +12,14 @@
 #include <unistd.h>
 #include <string.h>
 #include <ctype.h>
-#include <math.h> // -lm
+#include <math.h> // FLAG REQUIRED: -lm
 
 int main(int argc, char *argv[])
 {
+	// Validate arguments
 	if(argc != 4)
 	{
-		printf("Input expected: <server_ip> <server_socket> \"equation\"\n");
+		printf("Input expected: <server_ip> <server_port> \"equation\"\n");
 		exit(1);
 	}
 
@@ -31,17 +32,11 @@ int main(int argc, char *argv[])
 		exit(1);
 	}
 
-	// Fill Server Info
-	struct sockaddr_in server_address;
-	server_address.sin_family = AF_INET; // ipv4
-	server_address.sin_addr.s_addr = inet_addr(argv[1]); // ip
-	server_address.sin_port = htons(atoi(argv[2])); // socket
-
 	// Fill Client Info
 	struct sockaddr_in client_address;
 	client_address.sin_family = AF_INET; // ipv4
 	client_address.sin_addr.s_addr = htonl(INADDR_ANY); // all available ip
-	client_address.sin_port = htons(0); // use socket available between 1024-5000
+	client_address.sin_port = htons(0); // use port available between 1024-5000
 
 	// Bind into the Client Socket
 	if(bind(socket_descriptor, (struct sockaddr*) &client_address, sizeof(client_address)) < 0)
@@ -50,19 +45,26 @@ int main(int argc, char *argv[])
 		exit(1);
 	}
 
+	// Fill Server Info
+	struct sockaddr_in server_address;
+	server_address.sin_family = AF_INET; // ipv4
+	server_address.sin_addr.s_addr = inet_addr(argv[1]); // ip
+	server_address.sin_port = htons(atoi(argv[2])); // port
+
 	// Send Equation
 	if(sendto(socket_descriptor, argv[3], strlen(argv[3]), 0, (struct sockaddr*) &server_address, sizeof(server_address)) < 0)
 	{
 		printf("%s: Can't Send The Following Data: %s \n", argv[0], argv[3]);
 		exit(1);
 	}
-	printf("[Client] => %s\n", argv[3]);
+	printf("[Client] => %s\n", argv[3]); // Inform equation
 
+	// Get Result From Server
 	double* result = malloc(sizeof(double));
 	unsigned int server_size = sizeof(server_address);
-
 	if(recvfrom(socket_descriptor, result, sizeof(double), 0, (struct sockaddr*) &server_address, &server_size) >= 0)
 	{
+		// Inform result
 		printf("[%s:%u] => %.2lf\n", inet_ntoa(server_address.sin_addr), ntohs(server_address.sin_port), *result);
 	}
 }

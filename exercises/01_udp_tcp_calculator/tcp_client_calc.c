@@ -12,14 +12,15 @@
 #include <unistd.h>
 #include <string.h>
 #include <ctype.h>
-#include <math.h> // -lm
+#include <math.h> // FLAG REQUIRED: -lm
 #define MESSAGE_LENGTH 100
 
 int main(int argc, char *argv[])
 {
+	// Validate Arguments
 	if(argc < 3)
 	{
-		printf("Input expected: <server_ip> <server_socket>\n");
+		printf("Input expected: <server_ip> <server_port>\n");
 		exit(1);
 	}
 
@@ -36,7 +37,7 @@ int main(int argc, char *argv[])
 	struct sockaddr_in server_address;
 	server_address.sin_family = AF_INET; // ipv4
 	server_address.sin_addr.s_addr = inet_addr(argv[1]); // ip
-	server_address.sin_port = htons(atoi(argv[2])); // socket
+	server_address.sin_port = htons(atoi(argv[2])); // port
 
 	// Connect into the Server Socket
 	if(connect(socket_descriptor, (struct sockaddr*) &server_address, sizeof(server_address)) < 0)
@@ -57,6 +58,7 @@ int main(int argc, char *argv[])
 
 		if(strncmp(message, "END", 3) == 0) break;
 
+		// Get Result From The Server
 		if(recv(socket_descriptor, result, sizeof(double), 0) >= 0)
 		{
 			printf("[%s:%u] => %.2lf\n", inet_ntoa(server_address.sin_addr), ntohs(server_address.sin_port), *result);

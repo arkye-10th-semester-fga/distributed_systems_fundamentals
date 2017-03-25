@@ -20,9 +20,10 @@ void serve_client(int descriptor, struct sockaddr_in client_address);
 
 int main(int argc, char *argv[])
 {
+	// Validate Arguments
 	if(argc<3)
 	{
-		printf("Input expected: <ip> <socket>\n");
+		printf("Input expected: <ip> <port>\n");
 		exit(1);
 	}
 
@@ -39,7 +40,7 @@ int main(int argc, char *argv[])
 	struct sockaddr_in server_address;
 	server_address.sin_family = AF_INET; // ipv4
 	server_address.sin_addr.s_addr = inet_addr(argv[1]); // ip
-	server_address.sin_port = htons(atoi(argv[2])); // socket
+	server_address.sin_port = htons(atoi(argv[2])); // port
 
 	// Bind into the Server Socket
 	if(bind(socket_descriptor, (struct sockaddr*) &server_address, sizeof(server_address)) < 0)
@@ -55,7 +56,7 @@ int main(int argc, char *argv[])
 		exit(1);
 	}
 
-	printf("%s: Waiting Data in IP: %s, UDP Socket: %s\n", argv[0], argv[1], argv[2]);
+	printf("%s: Waiting Data in IP: %s, TCP Port: %s\n", argv[0], argv[1], argv[2]);
 	struct sockaddr_in client_address;
 	unsigned int client_size = sizeof(client_address);
 	int new_socket_descriptor;
@@ -87,15 +88,13 @@ int main(int argc, char *argv[])
 void serve_client(int descriptor, struct sockaddr_in client_address)
 {
 	char message[MESSAGE_LENGTH];
-	int  message_length; // in bytes
 	while(1)
 	{
 		// Reset the Message Buffer
 		memset(message, 0x0, MESSAGE_LENGTH);
 
 		// Get the Message
-		message_length = recv(descriptor, &message, MESSAGE_LENGTH, 0);
-		if(message_length < 0)
+		if(recv(descriptor, &message, MESSAGE_LENGTH, 0) < 0)
 		{
 			fprintf(stdout, "Can't Get Data \n");
 			continue;
@@ -148,7 +147,10 @@ void serve_client(int descriptor, struct sockaddr_in client_address)
 		}
 
 		// Send Result Back To Client
-		message_length = send(descriptor, &result, sizeof(double), 0);
+		if(send(descriptor, &result, sizeof(double), 0) >= 0)
+		{
+			fprintf(stdout, "[Server] => %.2lf\n", result);
+		}
 	}
 	fprintf(stdout, "Finishing Connection With %s:%u ...\n", inet_ntoa(client_address.sin_addr), ntohs(client_address.sin_port));
 	close(descriptor);

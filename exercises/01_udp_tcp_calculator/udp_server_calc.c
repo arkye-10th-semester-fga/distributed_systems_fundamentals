@@ -12,14 +12,15 @@
 #include <unistd.h>
 #include <string.h>
 #include <ctype.h>
-#include <math.h> // -lm
+#include <math.h> // FLAG REQUIRED: -lm
 #define MESSAGE_LENGTH 100
 
 int main(int argc, char *argv[])
 {
+	// Validate Arguments
 	if(argc < 3)
 	{
-		printf("Input expected: <ip> <socket>\n");
+		printf("Input expected: <ip> <port>\n");
 		exit(1);
 	}
 
@@ -36,7 +37,7 @@ int main(int argc, char *argv[])
 	struct sockaddr_in server_address;
 	server_address.sin_family = AF_INET; // ipv4
 	server_address.sin_addr.s_addr = inet_addr(argv[1]); // ip
-	server_address.sin_port = htons(atoi(argv[2])); // socket
+	server_address.sin_port = htons(atoi(argv[2])); // port
 
 	// Bind into the Server Socket
 	if(bind(socket_descriptor, (struct sockaddr*) &server_address, sizeof(server_address)) < 0)
@@ -45,19 +46,17 @@ int main(int argc, char *argv[])
 		exit(1);
 	}
 
-	printf("%s: Waiting Data in IP: %s, UDP Socket: %s\n", argv[0], argv[1], argv[2]);
+	printf("%s: Waiting Data in IP: %s, UDP Port: %s\n", argv[0], argv[1], argv[2]);
 	struct sockaddr_in client_address;
 	unsigned int client_size = sizeof(client_address);
 	char message[MESSAGE_LENGTH];
-	int message_length; // in bytes
 	while(1) // Wait Connection With Client Process
 	{
 		// Reset the Buffers
 		memset(message, 0x0, MESSAGE_LENGTH);
 
 		// Get the Message
-		message_length = recvfrom(socket_descriptor, message, MESSAGE_LENGTH, 0, (struct sockaddr*) &client_address, &client_size);
-		if(message_length < 0)
+		if(recvfrom(socket_descriptor, message, MESSAGE_LENGTH, 0, (struct sockaddr*) &client_address, &client_size) < 0)
 		{
 			printf("%s: Can't Get Data \n",argv[0]);
 			continue;
@@ -70,46 +69,49 @@ int main(int argc, char *argv[])
 		int i;
 		double first_number = 0;
 		double second_number = 0;
-		char operand = '+';
-		char operands[] = "+-*/^";
+		char operator = '+';
+		char operators[] = "+-*/^";
 		for(i = 0; i < 5; i++)
 		{
-			if(strchr(message, operands[i]) != NULL)
+			if(strchr(message, operators[i]) != NULL)
 			{
-				char* token = strtok(message, operands);
+				char* token = strtok(message, operators);
 				char* endPointer;
 				first_number = strtod(token, &endPointer);
-				token = strtok(NULL, operands);
+				token = strtok(NULL, operators);
 				second_number = strtod(token, &endPointer);
-				operand = operands[i];
+				operator = operators[i];
 			}
 		}
 
 		// Calculate Result
 		double result = 0.0;
-		if(operand == '+')
+		if(operator == '+')
 		{
 			result = first_number+second_number;
 		}
-		else if(operand == '-')
+		else if(operator == '-')
 		{
 			result = first_number-second_number;
 		}
-		else if(operand == '*')
+		else if(operator == '*')
 		{
 			result = first_number*second_number;
 		}
-		else if(operand == '/' && second_number != 0)
+		else if(operator == '/' && second_number != 0)
 		{
 			result = first_number/second_number;
 		}
-		else if(operand == '^')
+		else if(operator == '^')
 		{
 			result = pow(first_number,second_number);
 		}
 
 		// Send Result Back To Client
-		message_length = sendto(socket_descriptor, &result, sizeof(result), 0, (struct sockaddr*) &client_address, client_size);
+		if(sendto(socket_descriptor, &result, sizeof(result), 0, (struct sockaddr*) &client_address, client_size) >= 0)
+		{
+			printf("[Server] => %.2lf\n", result); // Inform result
+		}
 	}
 	return 0;
 }
