@@ -1,0 +1,4 @@
+grant codebase "file:/home/arkye/Workspace/FSD/distributed_systems_fundamentals/exercises/03_rmi_calculator" {
+	permission java.net.SocketPermission "127.0.0.1", "accept, connect, resolve";
+	permission java.net.SocketPermission "localhost", "accept, connect, resolve";
+};
